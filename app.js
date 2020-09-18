@@ -2,6 +2,7 @@
 const express = require('express');
 const querystring = require('querystring');
 const request = require('request');
+const requestPromise = require('request-promise');
 const ejs = require('ejs');
 const {Issuer} = require('openid-client');
 const token_helper = require('./token_helper');
@@ -50,13 +51,12 @@ app.get('/callback', (req, res) => {
             });
 
             // Requesting an access token from the "/token" endpoint using our authorization code
-            request({
+            requestPromise({
                 headers: { 'Content-Length': post_data.length, 'Content-Type': 'application/x-www-form-urlencoded' },
                 uri: TOKEN_URI,
                 body: post_data,
                 method: 'POST'
-            }, function (err, res2, body) {
-
+            }).then(function (err, res2, body) {
                 // Query userinfo endpoint to retreive profile info - using our access token
                 // NOTE: the access token is only valid for 5 minutes!
                 // You can use a refresh token to request a new access token without having to sign in again.
@@ -65,7 +65,10 @@ app.get('/callback', (req, res) => {
                         console.log(JSON.stringify(userinfo));
                         res.render('userinfo', { user: userinfo });
                     });
+            }).catch(function(error){
+                console.log(error);
             });
+
         });
 })
 
